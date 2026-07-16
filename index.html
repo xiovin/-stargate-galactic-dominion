@@ -23,7 +23,7 @@ nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:#020b14;border-
 </head>
 <body>
 <header>
-<div class="top"><div><h1>STARGATE: GALACTIC DOMINION</h1><span class="v">VERSION 0.6.1 — Combats et défenses</span></div><button onclick="resetGame()">Nouvelle partie</button></div>
+<div class="top"><div><h1>STARGATE: GALACTIC DOMINION</h1><span class="v">VERSION 0.6.2 — Affichage corrigé</span></div><button onclick="resetGame()">Nouvelle partie</button></div>
 <div class="resources">
 <div class="res">Naquadah<b id="metal">0</b></div><div class="res">Cristal<b id="crystal">0</b></div><div class="res">Énergie<b id="energy">0</b></div><div class="res">Population<b id="pop">0</b></div>
 </div>
@@ -79,7 +79,7 @@ ancient:['Bibliothèque Ancienne partiellement fonctionnelle.','Dépôt de drone
 const unitPower={'Équipe SG':45,'Marines':18,'Jaffa':26,'Commandos Wraith':38,'Soldats Ori':48,'Drones Réplicateurs':62};
 const shipPower={'F-302':55,'BC-304':650,'Jumper':120,'Destroyer':900,'Cargo spatial':35};
 function totalAttackPower(){let p=0;for(const [n,q] of Object.entries(state.units))p+=(unitPower[n]||10)*q;for(const [n,q] of Object.entries(state.ships))p+=(shipPower[n]||20)*q;return p}
-function totalDefensePower(){return DEFENSES.reduce((p,d)=>p+(state.defenses[d.name]||0)*d.power,p)}
+function totalDefensePower(){return DEFENSES.reduce((total,d)=>total+(state.defenses[d.name]||0)*d.power,0)}
 function removeLosses(pool,powers,targetLoss){let names=Object.keys(pool).filter(n=>pool[n]>0),lost={};let remaining=targetLoss;for(let safety=0;safety<5000&&remaining>0&&names.length;safety++){let n=names[Math.floor(Math.random()*names.length)],power=powers[n]||20;if(Math.random()<Math.min(.9,remaining/(remaining+power*3))){pool[n]--;lost[n]=(lost[n]||0)+1;remaining-=power;if(pool[n]<=0)names=names.filter(x=>x!==n)}else remaining-=Math.max(1,power*.08)}return lost}
 function lossText(lost){let a=Object.entries(lost).filter(([,q])=>q>0).map(([n,q])=>`${q} ${n}`);return a.length?a.join(', '):'aucune perte'}
 function launchRaid(){if(state.energy<1500)return addLog("Pas assez d'énergie.",'warn');let attack=totalAttackPower();if(attack<100)return addLog('Il faut produire des unités ou des vaisseaux avant de lancer un raid.','warn');state.energy-=1500;state.explored++;let enemy=Math.floor(140+Math.random()*Math.max(300,attack*1.25));let roll=attack*(.8+Math.random()*.45),win=roll>=enemy;let ownDamage=win?enemy*(.18+Math.random()*.18):enemy*(.45+Math.random()*.3);let unitLoss=removeLosses(state.units,unitPower,ownDamage*.55);let shipLoss=removeLosses(state.ships,shipPower,ownDamage*.45);if(win){let m=2200+Math.random()*5200,c=900+Math.random()*3000;state.metal+=m;state.crystal+=c;state.battlesWon++;addLog(`VICTOIRE contre un avant-poste ennemi. Butin : ${fmt(m)} Naquadah et ${fmt(c)} cristal. Pertes : ${lossText(unitLoss)} ; ${lossText(shipLoss)}.`,'good')}else{state.battlesLost++;addLog(`DÉFAITE lors du raid. La force ennemie était de ${fmt(enemy)}. Pertes : ${lossText(unitLoss)} ; ${lossText(shipLoss)}.`,'warn')}render();save()}
